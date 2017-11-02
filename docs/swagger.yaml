@@ -1,0 +1,332 @@
+swagger: "2.0"
+info:
+  description: "API чата Открытых линий Битрикс 24"
+  version: "1.0.0"
+  title: "API Чата ОЛ КС"
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "dmitrymatlah@gmail.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "concierge.swagger.io"
+basePath: "/pub/api/v1"
+tags:
+- name: "chat"
+  description: "Чат ОЛ КС"
+  externalDocs:
+    description: "Дополнительная информация"
+    url: ""
+schemes:
+- "http"
+- "https"
+paths:
+  /chat/{olAlias}/open:
+    post:
+      tags:
+      - "chat"
+      summary: "Открывает новый чат ОЛ Битрикс"
+      description: "Открывает чат и возвращает его хэш"
+      operationId: "openChat"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "object"
+            properties:
+              LIVECHAT_HASH:
+                type: "string"
+        400:
+          description: "Invalid input"
+  /chat/{olAlias}/{chatHash}/add_message:
+    post:
+      tags:
+      - "chat"
+      summary: "Отправка сообщения в открытый чат ОЛ Битрикс"
+      description: "Отправка сообщения"
+      operationId: "addMessage"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      - name: "chatHash"
+        in: "path"
+        description: "Хэш открытого чата Битрикс"
+        required: true
+        type: "string"
+      - name: "message"
+        in: "query"
+        description: "Текст сообщения"
+        required: true
+        type: "string"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/NewMessage"
+        400:
+          description: "Invalid input"
+        404:
+          description: "Not Found"
+  /chat/{olAlias}/{chatHash}/list:
+    get:
+      tags:
+      - "chat"
+      summary: "Получение списка сообщений чата ОЛ Битрикс"
+      description: "Список сообщений"
+      operationId: "getList"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      - name: "chatHash"
+        in: "path"
+        description: "Хэш открытого чата Битрикс"
+        required: true
+        type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Количество сообщений"
+        type: "integer"
+        maximum: 100
+        format: "int32"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/MessagesList"
+        400:
+          description: "Invalid input"
+        404:
+          description: "Not Found"
+  /chat/{olAlias}/{chatHash}/start_writing:
+    put:
+      tags:
+      - "chat"
+      summary: "Событие: Начало печати ответа"
+      description: "Флаг возвращения активности пользователя"
+      operationId: "startWritingEvent"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      - name: "chatHash"
+        in: "path"
+        description: "Хэш открытого чата Битрикс"
+        required: true
+        type: "string"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/EventResult"
+        400:
+          description: "Invalid input"
+        404:
+          description: "Not Found"
+  /chat/{olAlias}/{chatHash}/read_message:
+    put:
+      tags:
+      - "chat"
+      summary: "Событие: Сообщение прочитано"
+      description: ""
+      operationId: "readMessageEvent"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      - name: "chatHash"
+        in: "path"
+        description: "Хэш открытого чата Битрикс"
+        required: true
+        type: "string"
+      - name: "last_id"
+        in: "query"
+        description: "ID последнего не прочитанного сообщения в чате, не принадлежащего автору"
+        type: "integer"
+        format: "int32"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/EventResult"
+        400:
+          description: "Invalid input"
+        404:
+          description: "Not Found"
+  /chat/{olAlias}/{chatHash}/unread_message:
+    put:
+      tags:
+      - "chat"
+      summary: "Событие: Сброс метки 'сообщение прочитано'"
+      description: ""
+      operationId: "unReadMessageEvent"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      - name: "chatHash"
+        in: "path"
+        description: "Хэш открытого чата Битрикс"
+        required: true
+        type: "string"
+      - name: "last_id"
+        in: "query"
+        description: "ID сообщения для сброса флага 'прочтено'"
+        type: "integer"
+        format: "int32"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/EventResult"
+        400:
+          description: "Invalid input"
+        404:
+          description: "Not Found"
+definitions:
+  NewMessage:
+    type: "object"
+    properties:
+      ID:
+        type: "integer"
+        format: "int64"
+      CHAT_ID:
+        type: "string"
+      SEND_DATE:
+        type: "integer"
+        format: "int32"
+      SEND_MESSAGE:
+        type: "string"
+        description: "Сохраненное сообщение"
+      SEND_MESSAGE_FILES:
+        type: "array"
+        items:
+          type: "string"
+      SENDER_ID:
+        type: "integer"
+      LIVECHAT_HASH:
+        type: "string"
+      STATUS:
+        type: "string"
+      ERROR:
+        type: "string"
+        description: "Ошибка при сохраненном сообщении"
+  EventResult:
+    type: "object"
+    properties:
+      STATUS:
+        type: "string"
+        description: "Результат операции"
+        enum:
+          - OK
+          - ERROR
+      LIVECHAT_HASH:
+        type: "string"
+  MessagesList:
+    type: "object"
+    properties:
+      LIVECHAT_HASH:
+        type: "string"
+      LIMIT:
+        type: "integer"
+        format: "int32"
+      LIST:
+        type: "array"
+        description: "поля таблицы b_im_message"
+        items:
+          type: "object"
+          properties:
+            ID:
+              type: "string"
+            CHAT_ID:
+              type: "string"
+            AUTHOR_ID:
+              type: "string"
+            MESSAGE:
+              type: "string"
+            MESSAGE_OUT:
+              type: "string"
+              description: ""
+            DATE_CREATE: {}
+            EMAIL_TEMPLATE:
+              type: "string"
+              description: "Шаблон, по которому было отправлено уведомление"
+            NOTIFY_TYPE:
+              type: "string"
+              description: "1 - confirm, 2 - notify single from, 4 - notify single"
+            NOTIFY_MODULE:
+              type: "string"
+              default: "im"
+              description: "module id sender (ex: xmpp, main, etc)"
+            NOTIFY_EVENT:
+              type: "string"
+              description: "module event id for search (ex, IM_GROUP_INVITE)"
+            NOTIFY_TAG:
+              type: "string"
+              description: "field for group in JS notification and search in table"
+            NOTIFY_SUB_TAG:
+              type: "string"
+              description: "second TAG for search in table"
+            NOTIFY_TITLE:
+              type: "string"
+              description: "notify title to send email"
+            NOTIFY_BUTTONS:
+              type: "string"
+            NOTIFY_READ:
+              type: "string"
+              description: "array of buttons - available with NOTIFY_TYPE = 1"
+              enum:
+                - N
+                - Y
+            IMPORT_ID:
+              type: "string"
+              description: "Внешний идентификатор"
+            AUTHOR_LOGIN:
+              type: "string"
+              description: "Логин пользователя Битрикс - автора сообщения"
+              example: "imopenlines_6273YC5t3"
+
+externalDocs:
+  description: "Дополнительная информация"
+  url: "https://corp.petstory.ru"
