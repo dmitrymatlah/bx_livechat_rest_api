@@ -15,7 +15,7 @@ use Silex\ControllerCollection;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
-class LiveChat implements ControllerProviderInterface
+class LiveChatController implements ControllerProviderInterface
 {
     /**
      * @var array
@@ -57,7 +57,7 @@ class LiveChat implements ControllerProviderInterface
 
         /*Создание сессии чата*/
         $method->post(
-            '{alias}/open',
+            '{alias}/open/',
             function ($alias) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, '', false);
                 $this->response = [
@@ -82,16 +82,78 @@ class LiveChat implements ControllerProviderInterface
             }
         );
 
+        /*Регистрация файлов для загрузки"*/
+        $method->post(
+            '{alias}/{chatHash}/files_register',
+            function (Request $request, $alias, $chatHash) use ($app) {
+                $liveChat = self::getChatEntity($app, $alias, $chatHash);
+                $this->response =  $liveChat->filesRegister($request);
+                $this->response['LIVECHAT_HASH'] = $liveChat->getChatHash();
+
+                return $this->getResponse();
+            }
+        );
+
+        /*Отмена регистрация файлов для загрузки"*/
+        $method->post(
+            '{alias}/{chatHash}/files_unregister',
+            function (Request $request, $alias, $chatHash) use ($app) {
+                $liveChat = self::getChatEntity($app, $alias, $chatHash);
+                $this->response =  $liveChat->filesUnregister($request);
+                $this->response['LIVECHAT_HASH'] = $liveChat->getChatHash();
+
+                return $this->getResponse();
+            }
+        );
+
+        $method->post(
+            '{alias}/{chatHash}/files_upload',
+            function (Request $request, $alias, $chatHash) use ($app) {
+                $liveChat = self::getChatEntity($app, $alias, $chatHash);
+                $this->response =  $liveChat->filesUpload();
+                $this->response['LIVECHAT_HASH'] = $liveChat->getChatHash();
+
+                return $this->getResponse();
+            }
+        );
+
 
         /*PUT*/
+        /*Редактируем сообщение*/
+        $method->put(
+            '{alias}/{chatHash}/edit_message',
+            function (Request $request, $alias, $chatHash) use ($app) {
+                $liveChat = self::getChatEntity($app, $alias, $chatHash);
+                $this->response = $liveChat->editMessage($request);
+                $this->response ['LIVECHAT_HASH'] = $liveChat->getChatHash();
+
+                return $this->getResponse();
+            }
+        );
+        /**/
+        $method->put(
+            '{alias}/{chatHash}/delete_message',
+            function (Request $request, $alias, $chatHash) use ($app) {
+                $liveChat = self::getChatEntity($app, $alias, $chatHash);
+                $this->response = [
+                    'STATUS' => $liveChat->deleteMessage($request)
+                        ? 'OK'
+                        : 'ERROR',
+                    'LIVECHAT_HASH' => $liveChat->getChatHash()
+                ];
+
+                return $this->getResponse();
+            }
+        );
+
 
         /*Событие: Начало печати ответа*/
         $method->put(
             '{alias}/{chatHash}/start_writing',
-            function (Request $request, $alias, $chatHash) use ($app) {
+            function ($alias, $chatHash) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, $chatHash);
                 $this->response = [
-                    'STATUS' => $liveChat->startWritingEvent($request->get('message'))
+                    'STATUS' => $liveChat->startWritingEvent()
                         ? 'OK'
                         : 'ERROR',
                     'LIVECHAT_HASH' => $liveChat->getChatHash()
@@ -131,6 +193,7 @@ class LiveChat implements ControllerProviderInterface
             }
         );
 
+
         return $method;
     }
 
@@ -140,7 +203,7 @@ class LiveChat implements ControllerProviderInterface
      * @param $chatHash
      * @param bool $checkIsOpened
      *
-     * @return \Adv\Zoomir\ChatApi\Entities\Chat
+     * @return \BxLivechatRestApi\Entities\Chat
      */
     protected static function getChatEntity(Application $app, $alias, $chatHash, $checkIsOpened = true)
     {

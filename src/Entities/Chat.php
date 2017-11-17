@@ -1,16 +1,12 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: mclaod
- * Date: 25.10.17
- * Time: 14:04
- */
 
 namespace BxLivechatRestApi\Entities;
 
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
 use \Bitrix\ImOpenLines\LiveChat as BitrixLiveChat;
+use \BxLivechatRestApi\Utils\FileUploader;
+use Symfony\Component\HttpFoundation\Request;
 
 class Chat extends BitrixLiveChat
 {
@@ -92,9 +88,10 @@ class Chat extends BitrixLiveChat
     /**
      * Открываем сессию открытой линии
      *
-     * @param $liveChatHash
+     * @param string $liveChatHash
      *
      * @return null|string
+     * @throws \Exception
      */
     public function openSession($liveChatHash = '')
     {
@@ -136,6 +133,11 @@ class Chat extends BitrixLiveChat
         return $this->sessionId;
     }
 
+    /**
+     * @param null $userId
+     *
+     * @return int
+     */
     private function getGuestUser($userId = null)
     {
         $xmlId = $this->sessionId;
@@ -171,15 +173,6 @@ class Chat extends BitrixLiveChat
             }
         }
 
-        global $USER;
-        /*if ($USER->IsAuthorized())
-        {
-            $orm = \Bitrix\Main\UserTable::getList(array(
-                                                       'filter' => array('=ID' => $USER->GetId())
-                                                   ));
-        }
-        else
-        {*/
         $orm = \Bitrix\Main\UserTable::getList(
             [
                 'filter' => [
@@ -189,7 +182,6 @@ class Chat extends BitrixLiveChat
                 'limit'  => 1,
             ]
         );
-        // }
 
         if ($userFields = $orm->fetch()) {
             $userId = $userFields['ID'];
@@ -205,7 +197,7 @@ class Chat extends BitrixLiveChat
             }
         } else {
             $cUser = new \CUser;
-            $fields['LOGIN'] = self::MODULE_ID . '_' . rand(1000, 9999) . randString(5);
+            $fields['LOGIN'] = self::MODULE_ID . '_' . mt_rand(1000, 9999) . randString(5);
             $fields['NAME'] = $userName;
             $fields['LAST_NAME'] = $userLastName;
             if ($userAvatar) {
@@ -219,7 +211,7 @@ class Chat extends BitrixLiveChat
             }
             $fields['PERSONAL_GENDER'] = $userGender;
             $fields['WORK_POSITION'] = $userWorkPosition;
-            $fields['PASSWORD'] = md5($fields['LOGIN'] . '|' . rand(1000, 9999) . '|' . time());
+            $fields['PASSWORD'] = md5($fields['LOGIN'] . '|' . mt_rand(1000, 9999) . '|' . time());
             $fields['CONFIRM_PASSWORD'] = $fields['PASSWORD'];
             $fields['EXTERNAL_AUTH_ID'] = self::EXTERNAL_AUTH_ID;
             $fields['XML_ID'] = 'livechat|' . $xmlId;
@@ -231,6 +223,9 @@ class Chat extends BitrixLiveChat
         return $userId;
     }
 
+    /**
+     * @return array|bool|false|null
+     */
     private function getChatForUser()
     {
         $orm = \Bitrix\Im\Model\ChatTable::getList(
@@ -348,11 +343,20 @@ class Chat extends BitrixLiveChat
         return array_reverse($chatItems);
     }
 
+    /**
+     * @return array
+     */
     public function getChat()
     {
         return $this->chat;
     }
 
+    /**
+     * @param $message
+     *
+     * @return array
+     * @throws \Exception
+     */
     public function addMessage($message)
     {
         global $USER;
@@ -452,6 +456,56 @@ class Chat extends BitrixLiveChat
     }
 
     /**
+     * @param Request $request
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function editMessage(Request $request)
+    {
+        $initParams = [
+            'MESSAGE_ID' => (int) $request->get('ID'),
+            'MESSAGE' => $request->get('MESSAGE'),
+            'USER_TZ_OFFSET' => null !== $request->get('USER_TZ_OFFSET')
+                ? (int) $request->get('USER_TZ_OFFSET') : \CTimeZone::GetOffset()
+        ];
+
+        \CUtil::decodeURIComponent($initParams);
+
+        if(\CIMMessenger::Update($initParams['MESSAGE_ID'], $initParams['MESSAGE'])) {
+            $arResult = Array(
+                'ID' => $initParams['MESSAGE_ID'],
+                'MESSAGE' => \Bitrix\Im\Text::parse($initParams['MESSAGE']),
+                'DATE' => time() + $initParams['USER_TZ_OFFSET'],
+
+            );
+
+            return $arResult;
+        }
+
+        throw new \Exception('CANT_EDIT_MESSAGE', 403);
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return bool
+     * @throws \Exception
+     */
+    public function deleteMessage(Request $request)
+    {
+        $initParams = [
+            'MESSAGE_ID' => (int) $request->get('ID')
+        ];
+
+        if(\CIMMessenger::Delete($initParams['MESSAGE_ID'])) {
+            return true;
+        }
+
+        throw new \Exception('CANT_DELETE_MESSAGE', 403);
+    }
+
+    /**
      * Событие начала печати ответа
      * Обрабатывает События "im", "OnStartWriting"
      */
@@ -497,6 +551,128 @@ class Chat extends BitrixLiveChat
 
         $CIMChat = new \CIMChat();
         return $CIMChat->SetUnReadMessage($initParams['USER_ID'], $initParams['LAST_ID']);
+    }
+
+    public function filesRegister(Request $request)
+    {
+        if (!Loader::includeModule('disk')) {
+            throw new \Exception('Модуль disk не установлен', 503);
+        }
+
+        $initParams = [
+            'OL_SILENT'      => 'N',
+            'CHAT_ID'        => $this->chat['ID'],
+            'FILES'          => \CUtil::JsObjectToPhp($request->get('FILES')),
+            'MESSAGE_TMP_ID' => $request->get('MESSAGE_TMP_ID')?:'tempFile'+rand(0,1000),
+            'TEXT' =>  $request->get('TEXT')
+
+        ];
+        \CUtil::decodeURIComponent($initParams['TEXT']);
+
+        /*
+         * $initParams['FILES'] должен быть в формате {"file1510576968354":{"id":"file1510576968354","type":"file","mimeType":"application/json","name":"composer.json","size":628},...}
+        */
+        $result = \CIMDisk::UploadFileRegister(
+            $initParams['CHAT_ID'],
+            $initParams['FILES'],
+            $initParams['TEXT'],
+            $initParams['OL_SILENT'] === 'Y'
+        );
+        if (!$result) {
+            throw new \Exception('Файлы не зарегистрированы', 403);
+        }
+
+        if ($initParams['TEXT']) {
+            $ar['MESSAGE'] = trim(str_replace(['[BR]', '[br]'], "\n", $initParams['TEXT']));
+            $ar['MESSAGE'] = preg_replace("/\[DISK\=([0-9]+)\]/i", "", $ar['MESSAGE']);
+            $ar['MESSAGE'] = \Bitrix\Im\Text::parse($ar['MESSAGE']);
+        } else {
+            $ar['MESSAGE'] = '';
+        }
+
+        return [
+            'FILE_ID'        => $result['FILE_ID'],
+            'CHAT_ID'        => $initParams['CHAT_ID'],
+            'MESSAGE_TEXT'   => $ar['MESSAGE'],
+            'MESSAGE_ID'     => $result['MESSAGE_ID'],
+            'MESSAGE_TMP_ID' => $initParams['MESSAGE_TMP_ID'],
+        ];
+    }
+
+    public function filesUnregister(Request $request)
+    {
+
+        /*
+         * $initParams['FILES'] должен быть в формате {"file1510576968354":{"id":"file1510576968354","type":"file","mimeType":"application/json","name":"composer.json","size":628},...}
+        */
+        $initParams = [
+            'FILES' => \CUtil::JsObjectToPhp($request->get('FILES')),
+            'MESSAGES' => \CUtil::JsObjectToPhp($request->get('MESSAGES')),
+            'CHAT_ID' => $this->chat['ID']
+        ];
+
+        $result = \CIMDisk::UploadFileUnRegister($initParams['CHAT_ID'], $initParams['FILES'], $initParams['MESSAGES']);
+
+        if(!$result){
+            throw new Exception('Ошибка сброса регистрации', 403);
+        }
+        
+        return [
+            'STATUS' => 'OK'
+        ];
+    }
+
+    public static function getPseudoUniqueId()
+    {
+        return time() + ceil(mt_rand() / mt_getrandmax() * 1000000);
+    }
+
+    public function filesUpload()
+    {
+
+        if (!Loader::includeModule('disk')) {
+            throw new \Exception('Модуль disk не установлен', 503);
+        }
+        $initParams = [];
+
+        $initParams['sessid'] = bitrix_sessid();
+
+        $initParams['AJAX_POST'] = 'Y';
+        $initParams['USER_ID'] = $this->userId;
+        $initParams['size'] = '10';
+        $initParams['IM_FILE_UPLOAD'] = 'Y';
+        $initParams[FileUploader::INFO_NAME] = [
+            'controlId' => 'bitrixUploader',
+            'CID' => 'CID' . self::getPseudoUniqueId(),
+            'inputName' => FileUploader::FILE_NAME,
+            'version' => '1',
+            'packageIndex' => 'pIndex' . self::getPseudoUniqueId(),
+            'mode' => 'upload',
+        ];
+        $initParams[FileUploader::INFO_NAME]['filesCount'] = is_array($_REQUEST[FileUploader::FILE_NAME])
+            ? count($_REQUEST[FileUploader::FILE_NAME])
+            : 0;
+        $initParams['CHAT_ID'] = $this->chat['ID'];
+        $initParams['REG_CHAT_ID'] = $this->chat['ID'];
+
+        $_REQUEST = array_merge($_REQUEST, $initParams);
+        $_POST = array_merge($_POST, $initParams);
+
+        $CFileUploader = new FileUploader(
+            [
+                "allowUpload" => "A",
+                "events"      => [
+                    "onFileIsUploaded" => ["CIMDisk", "UploadFile"],
+                ],
+            ]
+        );
+        if (!$CFileUploader->checkPost()) {
+            throw new \Exception('UPLOAD_ERROR', 403);
+        }
+
+        return [
+            'STATUS'        =>  'OK',
+        ];
     }
 
     /**
