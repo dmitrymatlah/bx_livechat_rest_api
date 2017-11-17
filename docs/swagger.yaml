@@ -9,14 +9,14 @@ info:
   license:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-host: "concierge.swagger.io"
+host: "petstory.b24.adv.ru"
 basePath: "/pub/api/v1"
 tags:
 - name: "chat"
   description: "Чат ОЛ КС"
   externalDocs:
     description: "Дополнительная информация"
-    url: ""
+    url: "https://packagist.org/packages/adv/bitrix24-livechat-restapi"
 schemes:
 - "http"
 - "https"
@@ -84,6 +84,80 @@ paths:
           description: "Invalid input"
         404:
           description: "Not Found"
+
+  /chat/{olAlias}/{chatHash}/files_upload:
+    post:
+      tags:
+      - "chat"
+      summary: "Загрузка зарегистрированных файлов на сервер"
+      description: "Загрузка файлов на сервер"
+      operationId: "filesUpload"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      - name: "chatHash"
+        in: "path"
+        description: "Хэш открытого чата Битрикс"
+        required: true
+        type: "string"
+      - name: "FILES"
+        in: "query"
+        description: "Строка описания загружаемых файлов формат: {file1510921372906:{'id':'file1510921372906','type':'file','mimeType':'application/x-php','name':'extra.txt','size':635},...}"
+        required: true
+        type: "string"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/FilesAreUploaded"
+        400:
+          description: "Invalid input"
+        404:
+          description: "Not Found"
+
+  /chat/{olAlias}/{chatHash}/files_register:
+    post:
+      tags:
+      - "chat"
+      summary: "Регистрация файлов для отправки"
+      description: "Регистрация файлов для отправки"
+      operationId: "filesRegister"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      - name: "chatHash"
+        in: "path"
+        description: "Хэш открытого чата Битрикс"
+        required: true
+        type: "string"
+      - name: "FILE"
+        in: "query"
+        description: "Текст сообщения"
+        required: true
+        type: "string"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/FilesAreRegistered"
+        400:
+          description: "Invalid input"
+        404:
+          description: "Not Found"
   /chat/{olAlias}/{chatHash}/list:
     get:
       tags:
@@ -119,6 +193,83 @@ paths:
             $ref: "#/definitions/MessagesList"
         400:
           description: "Invalid input"
+        404:
+          description: "Not Found"
+  /chat/{olAlias}/{chatHash}/edit_message:
+    put:
+      tags:
+      - "chat"
+      summary: "Редактирование сообщения"
+      description: "Функция редактирования сообщения"
+      operationId: "editMessage"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      - name: "chatHash"
+        in: "path"
+        description: "Хэш открытого чата Битрикс"
+        required: true
+        type: "string"
+      - name: "ID"
+        in: "query"
+        description: "ID сообщения"
+        required: true
+        type: "integer"
+      - name: "MESSAGE"
+        in: "query"
+        description: "Текст отредактированного сообщения"
+        required: true
+        type: "string"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/EventResult"
+        403:
+          description: "CANT_EDIT_MESSAGE"
+        404:
+          description: "Not Found"
+  /chat/{olAlias}/{chatHash}/delete_message:
+    put:
+      tags:
+      - "chat"
+      summary: "Событие: Начало печати ответа"
+      description: "Флаг возвращения активности пользователя"
+      operationId: "deleteMessage"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      - name: "chatHash"
+        in: "path"
+        description: "Хэш открытого чата Битрикс"
+        required: true
+        type: "string"
+      - name: "ID"
+        in: "query"
+        description: "ID сообщения"
+        required: true
+        type: "integer"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/EventResult"
+        403:
+          description: "CANT_DELETE_MESSAGE"
         404:
           description: "Not Found"
   /chat/{olAlias}/{chatHash}/start_writing:
@@ -188,6 +339,7 @@ paths:
           description: "Invalid input"
         404:
           description: "Not Found"
+
   /chat/{olAlias}/{chatHash}/unread_message:
     put:
       tags:
@@ -252,6 +404,257 @@ definitions:
       ERROR:
         type: "string"
         description: "Ошибка при сохраненном сообщении"
+  FilesAreRegistered:
+   type: "object"
+   properties:
+    FILE_ID:
+      type: "array"
+      description: "Описание зарегистрированных файла {'file1510921372906':{'TMP_ID':'file1510921372906','FILE_ID':2489,'FILE_NAME':'extra.'}, ...}"
+      items:
+        type: "object"
+        additionalProperties:
+          type: "object"
+          properties:
+            TMP_ID:
+              type: "string"
+              example: "file1510921372906"
+            FILE_ID:
+              type: "integer"
+            FILE_NAME:
+              type: "string"
+    CHAT_ID:
+      type: "string"
+      example: '1458'
+    MESSAGE_TEXT:
+      type: "string"
+    MESSAGE_ID:
+      type: "integer"
+      example: 33528
+    MESSAGE_TMP_ID:
+      type: "integer"
+      example: 698
+    LIVECHAT_HASH:
+      type: "string"
+
+  FilesAreUploaded:
+    type: "object"
+    properties:
+      status:
+        description: "Общий статус загрузки"
+        type: "string"
+        enum: ["done", "inprogress"]
+      package:
+        type: "array"
+        description: "Описание пакета загрузки"
+        items:
+          type: "object"
+          additionalProperties:
+            type: "object"
+            properties:
+              CID:
+                type: "string"
+                example: "CID1511628100"
+              pIndex:
+                type: "string"
+                example: "pIndex1511329113"
+              filesCount:
+                type: "string"
+                example: '2'
+              files:
+                type: "array"
+                items:
+                  type: "object"
+                  additionalProperties:
+                    type: "string"
+              executeStatus:
+                type: "string"
+                description: "Статус исполнения"
+              uploadStatus:
+                type: "string"
+                description: "Статус загрузки"
+              executed:
+                type: "boolean"
+      report:
+        type: "object"
+        description: "результат $package->getCidLog(): формат report:{uploading:{'CID1511545543':{'executeStatus':'executed'}}}"
+        properties:
+          uploading:
+            type: "array"
+            items:
+              type: "object"
+              additionalProperties:
+                type: "object"
+                properties:
+                  executeStatus:
+                    type: "string"
+                    enum: ["executed", "none"]
+      files:
+        type: "array"
+        description: "Информация о загруженных файлах"
+        items:
+          type: "object"
+          additionalProperties:
+            hash:
+              type: "string"
+              example: "file1510924913392"
+            status:
+              type: "string"
+              enum: ["error", "uploaded"]
+            file:
+              type: "object"
+              properties:
+                hash:
+                  type: "string"
+                  example: "file1510924913392"
+                id:
+                  type: "string"
+                  example: "file1510924913392"
+                uploadStatus:
+                  type: "string"
+                  example: "uploaded"
+                executeStatus:
+                  type: "string"
+                  example: "executed"
+                name:
+                  type: "string"
+                  example: "404.php"
+                type:
+                  type: "string"
+                  example: "application/x-php"
+                size:
+                  type: "string"
+                  example: '1301'
+                files:
+                  type: "object"
+                  properties:
+                    default:
+                      type: "object"
+                      properties:
+                        size:
+                          type: "integer"
+                        type:
+                          type: "string"
+                          example: "application/x-php"
+                          description: "mime-type"
+                        name:
+                          type: "string"
+                          example: "404.php"
+                        code:
+                          type: "string"
+                          example: "default"
+                        uploadStatus:
+                          type: "string"
+                          example: "uploaded"
+                        url:
+                          type: "string"
+                          format: "uri"
+                          example: "'http://b24.ps.virt/pub/api/v1/chat/ks/d8e24c160110b98b2a6972f301f0b518/files_upload?bxu_info[CID]=CID1511628100&bxu_info[mode]=view&bxu_info[hash]=file1510924913392&bxu_info[copy]=default'
+                        "~url":
+                          type: "string"
+                          format: "uri"
+                        sizeFormatted:
+                          type: "string"
+                          example: "1.27 КБ"
+                fileId:
+                  type: "integer"
+                  description: "Bitrix File ID"
+                fileTmpId:
+                  type: "string"
+                  example: "file1510924913392"
+                fileMessageId:
+                  type: "integer"
+                  description: "ID сообщения"
+                fileMessageHidden:
+                  type: "string"
+                  enum: ['N', 'Y']
+                fileChatId:
+                  type: "integer"
+                  description: "ID чата"
+                fileParams:
+                  type: "object"
+                  properties:
+                    id:
+                      type: "string"
+                      example: "2502"
+                    chatId:
+                      type: "integer"
+                    date:
+                      type: "integer"
+                      example: "1510923978"
+                    type:
+                      type: "string"
+                      enum: ["file","image"]
+                    preview:
+                      type: "string"
+                    name:
+                      type: "string"
+                      example: "404.php"
+                    size:
+                      type: "string"
+                      example: "1301"
+                    image:
+                      type: "string"
+                    status:
+                      type: "string"
+                      example: "done"
+                    progress:
+                      type: "integer"
+                    authorId:
+                      type: "string"
+                      example: "1340"
+                    authorName:
+                      type: "string"
+                      example: "Гость"
+                    urlPreview:
+                      type: "string"
+                      example: ""
+                    urlShow:
+                      type: "object"
+                      properties:
+                        default:
+                          type: "string"
+                          format: "uri"
+                          example: "/bitrix/components/bitrix/im.messenger/download.file.php?fileId=2502"
+                        desktop:
+                          type: "string"
+                          format: "uri"
+                          example: "/desktop_app/download.file.php?fileId=2502"
+                        mobile:
+                          type: "string"
+                          format: "uri"
+                          example: "/mobile/ajax.php?mobile_action=im_files&fileType=download&fileId2502&fileName=404.php"
+                    urlDownload:
+                      type: "object"
+                      properties:
+                        default:
+                          type: "string"
+                          format: "uri"
+                          example: "/bitrix/components/bitrix/im.messenger/download.file.php?fileId=2502"
+                        desktop:
+                          type: "string"
+                          format: "uri"
+                          example: "/desktop_app/download.file.php?fileId=2502"
+                        mobile:
+                          type: "string"
+                          format: "uri"
+                          example: "/mobile/ajax.php?mobile_action=im_files&fileType=download&fileId=2502&fileName=404.php"
+                fileMessageOut:
+                  type: "string"
+                  format: "uri"
+                  example: "| 404.php (1.27 КБ) Скачать файл: http://b24.ps.virt/bitrix/components/bitrix/im.messenger/download.file.php?fileId=2502"
+                status:
+                  type: "string"
+                  enum: ["error", "done"]
+                error:
+                  type: "string"
+                  desciption: "Ntrcn"
+                  example: "Файл не загружен."
+            error:
+              type: "string"
+              description: "Текст для вывода ошибки (возможной)"
+      LIVECHAT_HASH:
+        type: "string"
+
   EventResult:
     type: "object"
     properties:

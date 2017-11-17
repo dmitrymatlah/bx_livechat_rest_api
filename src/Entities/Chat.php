@@ -666,13 +666,11 @@ class Chat extends BitrixLiveChat
                 ],
             ]
         );
-        if (!$CFileUploader->checkPost()) {
+        if (!$result = $CFileUploader->checkPost()) {
             throw new \Exception('UPLOAD_ERROR', 403);
         }
 
-        return [
-            'STATUS'        =>  'OK',
-        ];
+        return $result;
     }
 
     /**
