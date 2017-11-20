@@ -140,7 +140,7 @@ paths:
         description: "Хэш открытого чата Битрикс"
         required: true
         type: "string"
-      - name: "FILE"
+      - name: "FILES"
         in: "query"
         description: "Текст сообщения"
         required: true
@@ -156,6 +156,54 @@ paths:
             $ref: "#/definitions/FilesAreRegistered"
         400:
           description: "Invalid input"
+        404:
+          description: "Not Found"
+  /chat/{olAlias}/{chatHash}/files_unregister:
+    post:
+      tags:
+      - "chat"
+      summary: "Отмена регистрации файлов для отправки"
+      description: "Отмена регистрации файлов для отправки"
+      operationId: "filesUnregister"
+      parameters:
+      - name: "olAlias"
+        in: "path"
+        description: "ID или алиас ОЛ Битрикс"
+        required: true
+        type: "string"
+      - name: "chatHash"
+        in: "path"
+        description: "Хэш открытого чата Битрикс"
+        required: true
+        type: "string"
+      - name: "FILES"
+        in: "query"
+        description: "Описание файлов формат: {file1510921372906:2175, file1510921372906:2176, ...}"
+        required: true
+        type: "string"
+      - name: "MESSAGES"
+        in: "query"
+        description: "Идентификаторы сообщений чата d которых регистрировались файлы формат: {file1510921372906:34512, file1510921372906:34512, ...}"
+        required: true
+        type: "string"
+      consumes:
+      - "text/plain; charset=utf-8"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "object"
+            properties:
+              STATUS:
+                type: "string"
+              LIVECHAT_HASH:
+                type: "string"
+        400:
+          description: "Invalid input"
+        403:
+          description: "Ошибка сброса регистрации"
         404:
           description: "Not Found"
   /chat/{olAlias}/{chatHash}/list:
