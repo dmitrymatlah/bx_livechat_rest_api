@@ -57,7 +57,7 @@ class LiveChatController implements ControllerProviderInterface
 
         /*Создание сессии чата*/
         $method->post(
-            '{alias}/open/',
+            '{alias}/open',
             function ($alias) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, '', false);
                 $this->response = [
