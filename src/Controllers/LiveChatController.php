@@ -29,7 +29,6 @@ class LiveChatController implements ControllerProviderInterface
 
         /*GET*/
 
-
         /*Получение списка сообщений*/
         $method->get(
             '{alias}/{chatHash}/list',
@@ -71,10 +70,10 @@ class LiveChatController implements ControllerProviderInterface
 
         /*Добавление сообщения*/
         $method->post(
-            '{alias}/{chatHash}/add_message',
+            '{alias}/{chatHash}/message/add',
             function (Request $request, $alias, $chatHash) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, $chatHash);
-                $this->response = $liveChat->addMessage($request->get('message'));
+                $this->response = $liveChat->addMessage($request->get('MESSAGE'));
                 $this->response['LIVECHAT_HASH'] = $liveChat->getChatHash();
 
                 return $this->getResponse();
@@ -87,7 +86,7 @@ class LiveChatController implements ControllerProviderInterface
             '{alias}/{chatHash}/files_register',
             function (Request $request, $alias, $chatHash) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, $chatHash);
-                $this->response =  $liveChat->filesRegister($request);
+                $this->response = $liveChat->filesRegister($request);
                 $this->response['LIVECHAT_HASH'] = $liveChat->getChatHash();
 
                 return $this->getResponse();
@@ -99,7 +98,7 @@ class LiveChatController implements ControllerProviderInterface
             '{alias}/{chatHash}/files_unregister',
             function (Request $request, $alias, $chatHash) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, $chatHash);
-                $this->response =  $liveChat->filesUnregister($request);
+                $this->response = $liveChat->filesUnregister($request);
                 $this->response['LIVECHAT_HASH'] = $liveChat->getChatHash();
 
                 return $this->getResponse();
@@ -110,21 +109,20 @@ class LiveChatController implements ControllerProviderInterface
             '{alias}/{chatHash}/files_upload',
             function (Request $request, $alias, $chatHash) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, $chatHash);
-                $this->response =  $liveChat->filesUpload();
+                $this->response = $liveChat->filesUpload();
                 $this->response['LIVECHAT_HASH'] = $liveChat->getChatHash();
 
                 return $this->getResponse();
             }
         );
 
-
         /*PUT*/
         /*Редактируем сообщение*/
         $method->put(
-            '{alias}/{chatHash}/edit_message',
-            function (Request $request, $alias, $chatHash) use ($app) {
-                $liveChat = self::getChatEntity($app, $alias, $chatHash);
-                $this->response = $liveChat->editMessage($request);
+            '{alias}/{chatHash}/message/{messageId}/edit',
+            function (Request $request, $alias, $chatHash, $messageId) use ($app) {
+                $liveChat = self::getChatEntity($app, $alias, $chatHash, $messageId);
+                $this->response = $liveChat->editMessage($request, $messageId);
                 $this->response ['LIVECHAT_HASH'] = $liveChat->getChatHash();
 
                 return $this->getResponse();
@@ -132,20 +130,19 @@ class LiveChatController implements ControllerProviderInterface
         );
         /**/
         $method->put(
-            '{alias}/{chatHash}/delete_message',
-            function (Request $request, $alias, $chatHash) use ($app) {
+            '{alias}/{chatHash}/message/{messageId}/delete',
+            function (Request $request, $alias, $chatHash, $messageId) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, $chatHash);
                 $this->response = [
-                    'STATUS' => $liveChat->deleteMessage($request)
+                    'STATUS'        => $liveChat->deleteMessage($messageId)
                         ? 'OK'
                         : 'ERROR',
-                    'LIVECHAT_HASH' => $liveChat->getChatHash()
+                    'LIVECHAT_HASH' => $liveChat->getChatHash(),
                 ];
 
                 return $this->getResponse();
             }
         );
-
 
         /*Событие: Начало печати ответа*/
         $method->put(
@@ -153,10 +150,10 @@ class LiveChatController implements ControllerProviderInterface
             function ($alias, $chatHash) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, $chatHash);
                 $this->response = [
-                    'STATUS' => $liveChat->startWritingEvent()
+                    'STATUS'        => $liveChat->startWritingEvent()
                         ? 'OK'
                         : 'ERROR',
-                    'LIVECHAT_HASH' => $liveChat->getChatHash()
+                    'LIVECHAT_HASH' => $liveChat->getChatHash(),
                 ];
 
                 return $this->getResponse();
@@ -168,10 +165,10 @@ class LiveChatController implements ControllerProviderInterface
             function (Request $request, $alias, $chatHash) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, $chatHash);
                 $this->response = [
-                    'STATUS' => $liveChat->readMessageEvent($request->get('last_id'))
+                    'STATUS'        => $liveChat->readMessageEvent($request->get('last_id'))
                         ? 'OK'
                         : 'ERROR',
-                    'LIVECHAT_HASH' => $liveChat->getChatHash()
+                    'LIVECHAT_HASH' => $liveChat->getChatHash(),
                 ];
 
                 return $this->getResponse();
@@ -183,16 +180,15 @@ class LiveChatController implements ControllerProviderInterface
             function (Request $request, $alias, $chatHash) use ($app) {
                 $liveChat = self::getChatEntity($app, $alias, $chatHash);
                 $this->response = [
-                    'STATUS' => $liveChat->unReadMessageEvent($request->get('last_id'))
+                    'STATUS'        => $liveChat->unReadMessageEvent($request->get('last_id'))
                         ? 'OK'
                         : 'ERROR',
-                    'LIVECHAT_HASH' => $liveChat->getChatHash()
+                    'LIVECHAT_HASH' => $liveChat->getChatHash(),
                 ];
 
                 return $this->getResponse();
             }
         );
-
 
         return $method;
     }
@@ -212,7 +208,7 @@ class LiveChatController implements ControllerProviderInterface
         */
         $app['chat.alias'] = $alias;
         $app['chat.hash'] = $chatHash;
-        $app['chat.checkIsOpened'] = (bool) $checkIsOpened;
+        $app['chat.checkIsOpened'] = (bool)$checkIsOpened;
 
         return $app['chatEntity'];
     }

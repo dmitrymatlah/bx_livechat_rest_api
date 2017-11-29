@@ -336,11 +336,59 @@ class Chat extends BitrixLiveChat
 
         $res = \Bitrix\Im\MessageTable::getList($arFilter);
         $chatItems = [];
+        $messages = [];
         while ($row = $res->fetch()) {
-            $chatItems[] = $row;
+            $chatItems[$row['ID']] = $row;
+        }
+        $result = $chatItems;
+        if(!empty($chatItems)){
+            //Получаем параметры сообщений
+            //флаги удалено и редактировалось
+            $messagesParams = $this->getMessagesParams(array_keys($chatItems));
+
+            foreach($chatItems as $id => $data){
+                $result[$id]['IS_DELETED'] = $messagesParams[$id]['IS_DELETED'][0] === 'Y';
+                $result[$id]['IS_EDITED'] = $messagesParams[$id]['IS_EDITED'][0] === 'Y';
+            }
         }
 
-        return array_reverse($chatItems);
+
+        return array_reverse($result);
+    }
+
+    protected function getMessagesParams(array $messagesList)
+    {
+        $arResult = [];
+        $filter = [
+            '=MESSAGE_ID' => $messagesList,
+        ];
+        $messageParameters = \Bitrix\IM\Model\MessageParamTable::getList(
+            [
+                'select' => ['ID', 'MESSAGE_ID', 'PARAM_NAME', 'PARAM_VALUE', 'PARAM_JSON'],
+                'filter' => $filter,
+            ]
+        );
+        while($ar = $messageParameters->fetch())
+        {
+            if (strlen($ar["PARAM_JSON"]))
+            {
+                $value = \Bitrix\Main\Web\Json::decode($ar["PARAM_JSON"]);
+            }
+            else
+            {
+                $value = $ar["PARAM_VALUE"];
+            }
+            if ($ar["PARAM_NAME"] == 'KEYBOARD')
+            {
+                $arResult[$ar["MESSAGE_ID"]][$ar["PARAM_NAME"]] = $value;
+            }
+            else
+            {
+                $arResult[$ar["MESSAGE_ID"]][$ar["PARAM_NAME"]][] = $value;
+            }
+        }
+
+        return $arResult;
     }
 
     /**
@@ -461,24 +509,24 @@ class Chat extends BitrixLiveChat
      * @return array
      * @throws \Exception
      */
-    public function editMessage(Request $request)
+    public function editMessage(Request $request, $messageId)
     {
         $initParams = [
-            'MESSAGE_ID' => (int) $request->get('ID'),
-            'MESSAGE' => $request->get('MESSAGE'),
+            'MESSAGE_ID'     => (int)$messageId,
+            'MESSAGE'        => $request->get('MESSAGE'),
             'USER_TZ_OFFSET' => null !== $request->get('USER_TZ_OFFSET')
-                ? (int) $request->get('USER_TZ_OFFSET') : \CTimeZone::GetOffset()
+                ? (int)$request->get('USER_TZ_OFFSET') : \CTimeZone::GetOffset(),
         ];
 
         \CUtil::decodeURIComponent($initParams);
 
-        if(\CIMMessenger::Update($initParams['MESSAGE_ID'], $initParams['MESSAGE'])) {
-            $arResult = Array(
-                'ID' => $initParams['MESSAGE_ID'],
+        if (\CIMMessenger::Update($initParams['MESSAGE_ID'], $initParams['MESSAGE'])) {
+            $arResult = [
+                'ID'      => $initParams['MESSAGE_ID'],
                 'MESSAGE' => \Bitrix\Im\Text::parse($initParams['MESSAGE']),
-                'DATE' => time() + $initParams['USER_TZ_OFFSET'],
+                'DATE'    => time() + $initParams['USER_TZ_OFFSET'],
 
-            );
+            ];
 
             return $arResult;
         }
@@ -492,13 +540,13 @@ class Chat extends BitrixLiveChat
      * @return bool
      * @throws \Exception
      */
-    public function deleteMessage(Request $request)
+    public function deleteMessage($messageId)
     {
         $initParams = [
-            'MESSAGE_ID' => (int) $request->get('ID')
+            'MESSAGE_ID' => (int)$messageId,
         ];
 
-        if(\CIMMessenger::Delete($initParams['MESSAGE_ID'])) {
+        if (\CIMMessenger::Delete($initParams['MESSAGE_ID'])) {
             return true;
         }
 
@@ -531,7 +579,7 @@ class Chat extends BitrixLiveChat
         $initParams = [
             'OL_SILENT' => 'N',
             'USER_ID'   => 'chat' . $this->chat['ID'],
-            'LAST_ID'   => (int) $lastMessageId ? : null,
+            'LAST_ID'   => (int)$lastMessageId ?: null,
         ];
 
         $CIMChat = new \CIMChat();
@@ -546,10 +594,11 @@ class Chat extends BitrixLiveChat
         $initParams = [
             'OL_SILENT' => 'N',
             'USER_ID'   => 'chat' . $this->chat['ID'],
-            'LAST_ID'   => (int) $lastMessageId ? : null,
+            'LAST_ID'   => (int)$lastMessageId ?: null,
         ];
 
         $CIMChat = new \CIMChat();
+
         return $CIMChat->SetUnReadMessage($initParams['USER_ID'], $initParams['LAST_ID']);
     }
 
@@ -563,8 +612,8 @@ class Chat extends BitrixLiveChat
             'OL_SILENT'      => 'N',
             'CHAT_ID'        => $this->chat['ID'],
             'FILES'          => \CUtil::JsObjectToPhp($request->get('FILES')),
-            'MESSAGE_TMP_ID' => $request->get('MESSAGE_TMP_ID')?:'tempFile'+rand(0,1000),
-            'TEXT' =>  $request->get('TEXT')
+            'MESSAGE_TMP_ID' => $request->get('MESSAGE_TMP_ID') ?: 'tempFile' + rand(0, 1000),
+            'TEXT'           => $request->get('TEXT'),
 
         ];
         \CUtil::decodeURIComponent($initParams['TEXT']);
@@ -606,19 +655,19 @@ class Chat extends BitrixLiveChat
          * $initParams['FILES'] должен быть в формате {"file1510576968354":{"id":"file1510576968354","type":"file","mimeType":"application/json","name":"composer.json","size":628},...}
         */
         $initParams = [
-            'FILES' => \CUtil::JsObjectToPhp($request->get('FILES')),
+            'FILES'    => \CUtil::JsObjectToPhp($request->get('FILES')),
             'MESSAGES' => \CUtil::JsObjectToPhp($request->get('MESSAGES')),
-            'CHAT_ID' => $this->chat['ID']
+            'CHAT_ID'  => $this->chat['ID'],
         ];
 
         $result = \CIMDisk::UploadFileUnRegister($initParams['CHAT_ID'], $initParams['FILES'], $initParams['MESSAGES']);
 
-        if(!$result){
+        if (!$result) {
             throw new Exception('Ошибка сброса регистрации', 403);
         }
-        
+
         return [
-            'STATUS' => 'OK'
+            'STATUS' => 'OK',
         ];
     }
 
@@ -642,12 +691,12 @@ class Chat extends BitrixLiveChat
         $initParams['size'] = '10';
         $initParams['IM_FILE_UPLOAD'] = 'Y';
         $initParams[FileUploader::INFO_NAME] = [
-            'controlId' => 'bitrixUploader',
-            'CID' => 'CID' . self::getPseudoUniqueId(),
-            'inputName' => FileUploader::FILE_NAME,
-            'version' => '1',
+            'controlId'    => 'bitrixUploader',
+            'CID'          => 'CID' . self::getPseudoUniqueId(),
+            'inputName'    => FileUploader::FILE_NAME,
+            'version'      => '1',
             'packageIndex' => 'pIndex' . self::getPseudoUniqueId(),
-            'mode' => 'upload',
+            'mode'         => 'upload',
         ];
         $initParams[FileUploader::INFO_NAME]['filesCount'] = is_array($_REQUEST[FileUploader::FILE_NAME])
             ? count($_REQUEST[FileUploader::FILE_NAME])

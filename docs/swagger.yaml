@@ -48,7 +48,7 @@ paths:
                 type: "string"
         400:
           description: "Invalid input"
-  /chat/{olAlias}/{chatHash}/add_message:
+  /chat/{olAlias}/{chatHash}/message/add:
     post:
       tags:
       - "chat"
@@ -66,8 +66,8 @@ paths:
         description: "Хэш открытого чата Битрикс"
         required: true
         type: "string"
-      - name: "message"
-        in: "query"
+      - name: "MESSAGE"
+        in: "body"
         description: "Текст сообщения"
         required: true
         type: "string"
@@ -104,7 +104,7 @@ paths:
         required: true
         type: "string"
       - name: "FILES"
-        in: "query"
+        in: "body"
         description: "Строка описания загружаемых файлов формат: {file1510921372906:{'id':'file1510921372906','type':'file','mimeType':'application/x-php','name':'extra.txt','size':635},...}"
         required: true
         type: "string"
@@ -141,7 +141,7 @@ paths:
         required: true
         type: "string"
       - name: "FILES"
-        in: "query"
+        in: "body"
         description: "Текст сообщения"
         required: true
         type: "string"
@@ -177,12 +177,12 @@ paths:
         required: true
         type: "string"
       - name: "FILES"
-        in: "query"
+        in: "body"
         description: "Описание файлов формат: {file1510921372906:2175, file1510921372906:2176, ...}"
         required: true
         type: "string"
       - name: "MESSAGES"
-        in: "query"
+        in: "body"
         description: "Идентификаторы сообщений чата d которых регистрировались файлы формат: {file1510921372906:34512, file1510921372906:34512, ...}"
         required: true
         type: "string"
@@ -243,7 +243,7 @@ paths:
           description: "Invalid input"
         404:
           description: "Not Found"
-  /chat/{olAlias}/{chatHash}/edit_message:
+  /chat/{olAlias}/{chatHash}/message/{messageId}/edit:
     put:
       tags:
       - "chat"
@@ -261,8 +261,8 @@ paths:
         description: "Хэш открытого чата Битрикс"
         required: true
         type: "string"
-      - name: "ID"
-        in: "query"
+      - name: "messageId"
+        in: "path"
         description: "ID сообщения"
         required: true
         type: "integer"
@@ -284,7 +284,7 @@ paths:
           description: "CANT_EDIT_MESSAGE"
         404:
           description: "Not Found"
-  /chat/{olAlias}/{chatHash}/delete_message:
+  /chat/{olAlias}/{chatHash}/message/{messageId}/delete:
     put:
       tags:
       - "chat"
@@ -302,8 +302,8 @@ paths:
         description: "Хэш открытого чата Битрикс"
         required: true
         type: "string"
-      - name: "ID"
-        in: "query"
+      - name: "messageId"
+        in: "path"
         description: "ID сообщения"
         required: true
         type: "integer"
@@ -370,7 +370,7 @@ paths:
         required: true
         type: "string"
       - name: "last_id"
-        in: "query"
+        in: "body"
         description: "ID последнего не прочитанного сообщения в чате, не принадлежащего автору"
         type: "integer"
         format: "int32"
@@ -407,7 +407,7 @@ paths:
         required: true
         type: "string"
       - name: "last_id"
-        in: "query"
+        in: "body"
         description: "ID сообщения для сброса флага 'прочтено'"
         type: "integer"
         format: "int32"
