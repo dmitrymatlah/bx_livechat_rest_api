@@ -723,60 +723,120 @@ definitions:
         type: "integer"
         format: "int32"
       LIST:
-        type: "array"
-        description: "поля таблицы b_im_message"
-        items:
-          type: "object"
-          properties:
-            ID:
-              type: "string"
-            CHAT_ID:
-              type: "string"
-            AUTHOR_ID:
-              type: "string"
-            MESSAGE:
-              type: "string"
-            MESSAGE_OUT:
-              type: "string"
-              description: ""
-            DATE_CREATE: {}
-            EMAIL_TEMPLATE:
-              type: "string"
-              description: "Шаблон, по которому было отправлено уведомление"
-            NOTIFY_TYPE:
-              type: "string"
-              description: "1 - confirm, 2 - notify single from, 4 - notify single"
-            NOTIFY_MODULE:
-              type: "string"
-              default: "im"
-              description: "module id sender (ex: xmpp, main, etc)"
-            NOTIFY_EVENT:
-              type: "string"
-              description: "module event id for search (ex, IM_GROUP_INVITE)"
-            NOTIFY_TAG:
-              type: "string"
-              description: "field for group in JS notification and search in table"
-            NOTIFY_SUB_TAG:
-              type: "string"
-              description: "second TAG for search in table"
-            NOTIFY_TITLE:
-              type: "string"
-              description: "notify title to send email"
-            NOTIFY_BUTTONS:
-              type: "string"
-            NOTIFY_READ:
-              type: "string"
-              description: "array of buttons - available with NOTIFY_TYPE = 1"
-              enum:
-                - N
-                - Y
-            IMPORT_ID:
-              type: "string"
-              description: "Внешний идентификатор"
-            AUTHOR_LOGIN:
-              type: "string"
-              description: "Логин пользователя Битрикс - автора сообщения"
-              example: "imopenlines_6273YC5t3"
+        type: "object"
+        properties:
+          MESSAGE:
+            type: "array"
+            description: "поля таблицы b_im_message"
+            items:
+              type: "object"
+              properties:
+                ID:
+                  type: "string"
+                CHAT_ID:
+                  type: "string"
+                AUTHOR_ID:
+                  type: "string"
+                MESSAGE:
+                  type: "string"
+                MESSAGE_OUT:
+                  type: "string"
+                  description: ""
+                DATE_CREATE: {}
+                EMAIL_TEMPLATE:
+                  type: "string"
+                  description: "Шаблон, по которому было отправлено уведомление"
+                NOTIFY_TYPE:
+                  type: "string"
+                  description: "1 - confirm, 2 - notify single from, 4 - notify single"
+                NOTIFY_MODULE:
+                  type: "string"
+                  default: "im"
+                  description: "module id sender (ex: xmpp, main, etc)"
+                NOTIFY_EVENT:
+                  type: "string"
+                  description: "module event id for search (ex, IM_GROUP_INVITE)"
+                NOTIFY_TAG:
+                  type: "string"
+                  description: "field for group in JS notification and search in table"
+                NOTIFY_SUB_TAG:
+                  type: "string"
+                  description: "second TAG for search in table"
+                NOTIFY_TITLE:
+                  type: "string"
+                  description: "notify title to send email"
+                NOTIFY_BUTTONS:
+                  type: "string"
+                NOTIFY_READ:
+                  type: "string"
+                  description: "array of buttons - available with NOTIFY_TYPE = 1"
+                  enum:
+                    - N
+                    - Y
+                IMPORT_ID:
+                  type: "string"
+                  description: "Внешний идентификатор"
+                AUTHOR_LOGIN:
+                  type: "string"
+                  description: "Логин пользователя Битрикс - автора сообщения"
+                  example: "imopenlines_6273YC5t3"
+                IS_DELETED:
+                  type: "string"
+                  enum: ['true', 'false']
+                IS_EDITED:
+                  type: "string"
+                  enum: ['true', 'false']
+            USERS:
+              type: "array"
+              description: "сведения о пользователях в чате"
+              items:
+                type: "object"
+                properties:
+                  MESSAGE_OUT:
+                    type: "string"
+                    description: ""
+                  id:
+                    type: "string"
+                    example: "1665"
+                  name:
+                    type: "string"
+                    example: "Гость"
+                  nameList:
+                    type: "string"
+                    example: "Гость"
+                  active:
+                    type: "boolean"
+                  firstName:
+                    type: "string"
+                  lastName:
+                    type: "string"
+                    example: "Гость"
+                  workPosition:
+                    type: "string"
+                  color:
+                    type: "string"
+                    example: "#3e99ce"
+                  avatar:
+                    type: "string"
+                    example: "/bitrix/js/im/images/blank.gif"
+                  avatarId: ""
+                  status:
+                    type: "string"
+                    enum: ['offline', 'online']
+                  birthday:
+                    type: "string"
+                  gender":
+                    type: "string"
+                    enum: ["M", "F"]
+                  extranet:
+                    type: "boolean"
+                  tzOffset:
+                    type: "integer"
+                  bot:
+                    type: "boolean"
+                  profile:
+                    type: "string"
+                    example: "/extranet/contacts/personal/user/1665/"
 
 externalDocs:
   description: "Дополнительная информация"
