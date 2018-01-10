@@ -340,8 +340,8 @@ class Chat extends BitrixLiveChat
         $arUsers = [];
         while ($row = $res->fetch()) {
             $chatItems[$row['ID']] = $row;
-            if(!empty($row['AUTHOR_ID'])){
-                $arUsers[] =  (int) $row['AUTHOR_ID'];
+            if (!empty($row['AUTHOR_ID'])) {
+                $arUsers[] = (int)$row['AUTHOR_ID'];
             }
         }
         $result['MESSAGE'] = $chatItems;
@@ -349,12 +349,21 @@ class Chat extends BitrixLiveChat
         if (!empty($chatItems)) {
             //Получаем параметры сообщений
             //флаги удалено и редактировалось
-            $messagesParams = $this->getMessagesParams(array_keys($chatItems));
+            $messageParams = $this->getMessagesParams(array_keys($chatItems));
 
+            $arFiles = [];
             foreach ($chatItems as $id => $data) {
-                $result['MESSAGE'][$id]['IS_DELETED'] = $messagesParams[$id]['IS_DELETED'][0] === 'Y';
-                $result['MESSAGE'][$id]['IS_EDITED'] = $messagesParams[$id]['IS_EDITED'][0] === 'Y';
+                $result['MESSAGE'][$id]['IS_DELETED'] = $messageParams[$id]['IS_DELETED'][0] === 'Y';
+                $result['MESSAGE'][$id]['IS_EDITED'] = $messageParams[$id]['IS_EDITED'][0] === 'Y';
+
+                if (isset($messageParams[$id]['FILE_ID'])) {
+                    foreach ($messageParams[$id]['FILE_ID'] as $fileId) {
+                        $arFiles[$fileId] = $fileId;
+                    }
+                }
             }
+            $result['FILES'] = \CIMDisk::GetFiles($this->chat['ID'], $arFiles);
+
             $result['USERS'] = [];
             if (!empty($arUsers)) {
                 $ar = \CIMContactList::GetUserData([
@@ -451,8 +460,8 @@ class Chat extends BitrixLiveChat
             if (substr($initParams['RECIPIENT_ID'], 0, 4) != 'chat'
                 && !\Bitrix\Im\User::getInstance($USER->GetID())->isConnector()) {
                 $ar = [
-                    "FROM_USER_ID" => intval($USER->GetID()),
-                    "TO_USER_ID" => intval($initParams['RECIPIENT_ID']),
+                    "FROM_USER_ID" => (int) $USER->GetID(),
+                    "TO_USER_ID" => (int) $initParams['RECIPIENT_ID'],
                     "MESSAGE" => $initParams['MESSAGE'],
                 ];
                 $insertID = \CIMMessage::Add($ar);
@@ -587,7 +596,7 @@ class Chat extends BitrixLiveChat
         $initParams = [
             'OL_SILENT' => 'N',
             'USER_ID' => 'chat' . $this->chat['ID'],
-            'LAST_ID' => (int) $lastMessageId ?: null,
+            'LAST_ID' => (int)$lastMessageId ?: null,
         ];
 
         $CIMChat = new \CIMChat();
