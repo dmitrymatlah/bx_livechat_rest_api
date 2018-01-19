@@ -24,6 +24,9 @@ class Chat extends BitrixLiveChat
 
     private $chat = null;
 
+    const SYSTEM_AVATAR = '/upload/system_avatar.png';
+    const SYSTEM_NAME = 'Petstory';
+
     public function __construct($chatAlias, $chatHash = '', $checkIsOpened = true)
     {
         self::checkModules();
@@ -346,6 +349,8 @@ class Chat extends BitrixLiveChat
         }
 
         $result['LINE_NAME'] = $this->config['LINE_NAME'];
+        $result['SYSTEM_NAME'] = self::SYSTEM_NAME;
+        $result['SYSTEM_AVATAR'] = self::SYSTEM_AVATAR;
         $result['MESSAGE'] = $chatItems;
 
         if (!empty($chatItems)) {
