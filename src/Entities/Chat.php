@@ -345,7 +345,7 @@ class Chat extends BitrixLiveChat
             }
         }
 
-        $result['CHAT_TITLE'] = $this->chat['TITLE'];
+        $result['LINE_NAME'] = $this->config['LINE_NAME'];
         $result['MESSAGE'] = $chatItems;
 
         if (!empty($chatItems)) {
@@ -535,7 +535,6 @@ class Chat extends BitrixLiveChat
                 'ID' => $initParams['MESSAGE_ID'],
                 'MESSAGE' => \Bitrix\Im\Text::parse($initParams['MESSAGE']),
                 'DATE' => time() + $initParams['USER_TZ_OFFSET'],
-
             ];
 
             return $arResult;
