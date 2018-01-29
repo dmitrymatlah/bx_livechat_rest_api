@@ -25,7 +25,7 @@ class Chat extends BitrixLiveChat
     private $chat = null;
 
     const SYSTEM_AVATAR = '/upload/system_avatar.png';
-    const SYSTEM_NAME = 'Petstory';
+    const SYSTEM_NAME = 'PetStory';
 
     public function __construct($chatAlias, $chatHash = '', $checkIsOpened = true)
     {
