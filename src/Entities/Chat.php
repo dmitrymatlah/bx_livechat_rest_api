@@ -366,6 +366,7 @@ class Chat extends BitrixLiveChat
                 if (isset($messageParams[$id]['FILE_ID'])) {
                     foreach ($messageParams[$id]['FILE_ID'] as $fileId) {
                         $arFiles[$fileId] = $fileId;
+                        $result['MESSAGE'][$id]['FILES'][] = $fileId;
                     }
                 }
             }
@@ -467,8 +468,8 @@ class Chat extends BitrixLiveChat
             if (substr($initParams['RECIPIENT_ID'], 0, 4) != 'chat'
                 && !\Bitrix\Im\User::getInstance($USER->GetID())->isConnector()) {
                 $ar = [
-                    "FROM_USER_ID" => (int) $USER->GetID(),
-                    "TO_USER_ID" => (int) $initParams['RECIPIENT_ID'],
+                    "FROM_USER_ID" => (int)$USER->GetID(),
+                    "TO_USER_ID" => (int)$initParams['RECIPIENT_ID'],
                     "MESSAGE" => $initParams['MESSAGE'],
                 ];
                 $insertID = \CIMMessage::Add($ar);
