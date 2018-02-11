@@ -12,7 +12,9 @@ use Silex\Application;
 use Silex\Route;
 use Silex\Api\ControllerProviderInterface;
 use Silex\ControllerCollection;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 class LiveChatController implements ControllerProviderInterface
@@ -39,7 +41,7 @@ class LiveChatController implements ControllerProviderInterface
                 $limit = (int)$request->get('limit') ?: 10;
                 $offset = (int)$request->get('offset') ?: 0;
                 /*Запрос списка*/
-                $chatItems = $liveChat->getList($limit, $offset);
+                $chatItems = $liveChat->getList($app, $limit, $offset);
                 $this->response = [
                     'LIVECHAT_HASH' => $liveChat->getChatHash(),
                     'LIST'          => $chatItems,
@@ -48,6 +50,19 @@ class LiveChatController implements ControllerProviderInterface
                 ];
 
                 return $this->getResponse();
+
+            }
+        );
+
+        $method->get(
+            '{alias}/{chatHash}/file/{action}',
+            function (Request $request, $alias, $chatHash, $action) use ($app) {
+
+                $liveChat = self::getChatEntity($app, $alias, $chatHash);
+                /*Запрос файла*/
+                $file = $liveChat->getFile($request, $action);
+
+                return $this->getFileResponse();
 
             }
         );
@@ -219,5 +234,10 @@ class LiveChatController implements ControllerProviderInterface
     protected function getResponse()
     {
         return new JsonResponse($this->response);
+    }
+
+    protected function getFileResponse()
+    {
+        return new BinaryFileResponse($this->response);
     }
 }

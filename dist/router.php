@@ -55,6 +55,9 @@ $app->before(function () {
     if (!Loader::includeModule('imopenlines')) {
         throw new \Exception('Модуль imopenlines не установлен', 503);
     }
+    if (!Loader::includeModule('disk')) {
+        throw new \Exception('Модуль disk не установлен', 503);
+    }
 
 });
 

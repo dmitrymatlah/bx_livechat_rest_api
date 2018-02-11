@@ -5,7 +5,9 @@ namespace BxLivechatRestApi\Entities;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
 use \Bitrix\ImOpenLines\LiveChat as BitrixLiveChat;
-use \BxLivechatRestApi\Utils\FileUploader;
+use BxLivechatRestApi\Utils\FileUploader;
+use BxLivechatRestApi\Utils\ImagePreviewSizeFilter;
+use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
 class Chat extends BitrixLiveChat
@@ -322,7 +324,7 @@ class Chat extends BitrixLiveChat
      * @return array
      * @throws \Exception
      */
-    public function getList($limit = 10, $offset = 0)
+    public function getList($app, $limit = 10, $offset = 0)
     {
         $arFilter = [
             'select' => ['*', 'AUTHOR_LOGIN' => 'AUTHOR.LOGIN'],
@@ -372,6 +374,14 @@ class Chat extends BitrixLiveChat
             }
             $result['FILES'] = \CIMDisk::GetFiles($this->chat['ID'], $arFiles);
 
+            foreach($result['FILES'] as &$fileData){
+                $fileData['urlShow'] = self::getFileUrl($app, 'show', $fileData['id']);
+                $fileData['urlDownload'] = self::getFileUrl($app,'download', $fileData['id']);
+                if($fileData['type'] === 'image'){
+                    $fileData['urlPreview'] = self::getFileUrl($app,'preview', $fileData['id']);;
+                }
+            }
+
             $result['USERS'] = [];
             if (!empty($arUsers)) {
                 $ar = \CIMContactList::GetUserData([
@@ -386,6 +396,11 @@ class Chat extends BitrixLiveChat
         }
 
         return $result;
+    }
+
+    public static function getFileUrl(Application $app, $action, $fileId){
+        $fileIdGetParamName = 'fileId';
+        return $app['config.basePath'].$app['chat.alias'].'/'.$app['chat.hash'].'/file/'.$action.'?'.$fileIdGetParamName.'='.$fileId;
     }
 
     protected function getMessagesParams(array $messagesList)
@@ -693,6 +708,34 @@ class Chat extends BitrixLiveChat
         return [
             'STATUS' => 'OK',
         ];
+    }
+
+    public function getFile(Request $request, $action){
+        //Необходимо передавать fileId в query string, т.к.  \Bitrix\Disk\DownloadController()
+        //будет при проверке искать его там.
+        $_GET['fileId'] = (int) $_GET['fileId'];
+        switch ($action){
+            case 'show':
+                $_GET['action'] = 'showFile';
+                break;
+            case 'preview':
+                $_GET['action'] = 'showFile';
+                $_GET['preview'] = 'Y';
+                $_GET['width'] = 500;
+                $_GET['height'] = 500;
+                $_GET['signature'] = \Bitrix\Disk\Security\ParameterSigner::getImageSignature($_GET['fileId'], $_GET['width'], $_GET['height']);
+                //класс фильтра для ресайза изображения перед отдачей
+                \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->addFilter(new ImagePreviewSizeFilter);
+                break;
+            case 'download':
+            default:
+                $_GET['action'] = 'downloadFile';
+        }
+
+
+        $controller = new \Bitrix\Disk\DownloadController();
+        $controller->setActionName($_GET['action'])->exec();
+
     }
 
     public static function getPseudoUniqueId()
