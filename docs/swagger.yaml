@@ -9,9 +9,6 @@ info:
   license:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-  examples:
-    name: "Пример скрипта для отправки файлов в чат"
-    url: "https://github.com/dmitrymatlah/bx_livechat_rest_api/blob/master/docs/examples/file_upload.php"
 host: "petstory.b24.adv.ru"
 basePath: "/pub/api/v1"
 tags:
@@ -93,7 +90,7 @@ paths:
       tags:
       - "chat"
       summary: "Загрузка зарегистрированных файлов на сервер"
-      description: "Загрузка файлов на сервер. <a href='https://github.com/dmitrymatlah/bx_livechat_rest_api/blob/master/docs/examples/file_upload.php'>Пример скрипта</a>"
+      description: "Загрузка файлов на сервер"
       operationId: "filesUpload"
       parameters:
       - name: "olAlias"
@@ -130,7 +127,7 @@ paths:
       tags:
       - "chat"
       summary: "Регистрация файлов для отправки"
-      description: "Регистрация файлов для отправки.  <a href='https://github.com/dmitrymatlah/bx_livechat_rest_api/blob/master/docs/examples/file_upload.php'>Пример скрипта</a>"
+      description: "Регистрация файлов для отправки"
       operationId: "filesRegister"
       parameters:
       - name: "olAlias"
@@ -145,7 +142,7 @@ paths:
         type: "string"
       - name: "FILES"
         in: "body"
-        description: "Строка описания загружаемых файлов формат: {file1510921372906:{'id':'file1510921372906','type':'file','mimeType':'application/x-php','name':'extra.txt','size':635},...}"
+        description: "Текст сообщения"
         required: true
         type: "string"
       consumes:
@@ -717,7 +714,6 @@ definitions:
           - ERROR
       LIVECHAT_HASH:
         type: "string"
-
   MessagesList:
     type: "object"
     properties:
@@ -790,110 +786,57 @@ definitions:
                 IS_EDITED:
                   type: "string"
                   enum: ['true', 'false']
-          USERS:
-            type: "array"
-            description: "сведения о пользователях в чате"
-            items:
-              type: "object"
-              properties:
-                id:
-                  type: "string"
-                  example: "1665"
-                name:
-                  type: "string"
-                  example: "Гость"
-                nameList:
-                  type: "string"
-                  example: "Гость"
-                active:
-                  type: "boolean"
-                firstName:
-                  type: "string"
-                lastName:
-                  type: "string"
-                  example: "Гость"
-                workPosition:
-                  type: "string"
-                color:
-                  type: "string"
-                  example: "#3e99ce"
-                avatar:
-                  type: "string"
-                  example: "/bitrix/js/im/images/blank.gif"
-                avatarId: ""
-                status:
-                  type: "string"
-                  enum: ['offline', 'online']
-                birthday:
-                  type: "string"
-                gender:
-                  type: "string"
-                  enum: ["M", "F"]
-                extranet:
-                  type: "boolean"
-                tzOffset:
-                  type: "integer"
-                bot:
-                  type: "boolean"
-                profile:
-                  type: "string"
-                  example: "/extranet/contacts/personal/user/1665/"
-          FILES:
-            type: "array"
-            description: "Сведения о загруженных файлах"
-            items:
-              type: "object"
-              properties:
-                id:
-                  type: "string"
-                  example: "1665"
-                chatId:
-                  type: "integer"
-                  example: 1430
-                date:
-                  type: "integer"
-                  example: 1515565782
-                type:
-                  type: "string"
-                  example: "1665"
-                preview:
-                  type: "string"
-                  example: "file"
-                  enum: ['file', 'image']
-                size:
-                  type: "string"
-                  example: "554"
-                image:
-                  description: ' null or {"width": "4000","height": "3000"}'
-                  type: "string"
-                  example: null
-                status:
-                  type: "string"
-                  example: "done"
-                progress:
-                  type: "integer"
-                  example: 100
-                authorId:
-                  type: "string"
-                  example: "1322"
-                authorName:
-                  type: "string"
-                  example: "Гость"
-                urlPreview:
-                  type: "array"
-                  example: '"default": "/bitrix/components/bitrix/im.messenger/download.file.php?fileId=2116","desktop": "/desktop_app/download.file.php?fileId=2116","mobile": "/mobile/ajax.php?mobile_action=im_files&fileType=download&fileId=2116&fileName=GOPR0805.MP4.modd"'
-                  items:
+            USERS:
+              type: "array"
+              description: "сведения о пользователях в чате"
+              items:
+                type: "object"
+                properties:
+                  MESSAGE_OUT:
                     type: "string"
-                urlShow:
-                  type: "array"
-                  example: '"default": "/bitrix/components/bitrix/im.messenger/download.file.php?fileId=2116","desktop": "/desktop_app/download.file.php?fileId=2116","mobile": "/mobile/ajax.php?mobile_action=im_files&fileType=download&fileId=2116&fileName=GOPR0805.MP4.modd"'
-                  items:
+                    description: ""
+                  id:
                     type: "string"
-                urlDownload:
-                  type: "array"
-                  example: '"default": "/bitrix/components/bitrix/im.messenger/download.file.php?fileId=2116","desktop": "/desktop_app/download.file.php?fileId=2116","mobile": "/mobile/ajax.php?mobile_action=im_files&fileType=download&fileId=2116&fileName=GOPR0805.MP4.modd"'
-                  items:
+                    example: "1665"
+                  name:
                     type: "string"
+                    example: "Гость"
+                  nameList:
+                    type: "string"
+                    example: "Гость"
+                  active:
+                    type: "boolean"
+                  firstName:
+                    type: "string"
+                  lastName:
+                    type: "string"
+                    example: "Гость"
+                  workPosition:
+                    type: "string"
+                  color:
+                    type: "string"
+                    example: "#3e99ce"
+                  avatar:
+                    type: "string"
+                    example: "/bitrix/js/im/images/blank.gif"
+                  avatarId: ""
+                  status:
+                    type: "string"
+                    enum: ['offline', 'online']
+                  birthday:
+                    type: "string"
+                  gender":
+                    type: "string"
+                    enum: ["M", "F"]
+                  extranet:
+                    type: "boolean"
+                  tzOffset:
+                    type: "integer"
+                  bot:
+                    type: "boolean"
+                  profile:
+                    type: "string"
+                    example: "/extranet/contacts/personal/user/1665/"
 
 externalDocs:
   description: "Дополнительная информация"

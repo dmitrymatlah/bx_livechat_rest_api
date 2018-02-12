@@ -29,6 +29,8 @@ if (!defined('IM_AJAX_INIT')) {
     define("NO_KEEP_STATISTIC", "Y");
     define("NO_AGENT_STATISTIC", "Y");
     define("NOT_CHECK_PERMISSIONS", true);
+    define("DisableEventsCheck", true);
+    define("STOP_STATISTICS", true);
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 }
 
@@ -38,7 +40,7 @@ $app['config.basePath'] = '/pub/api/v1/chat/';
 /*При попытке создать сообщение,
 либо получить список сообщений и т.д.
 будет выполнена проверка существования сессии чата по хэшу
-и если такой нет будет выброшено исключение
+и если такой нет, будет выброшено исключение
 */
 $app['chat.checkIsOpened'] = false;
 

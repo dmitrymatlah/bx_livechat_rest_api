@@ -721,9 +721,6 @@ class Chat extends BitrixLiveChat
             case 'preview':
                 $_GET['action'] = 'showFile';
                 $_GET['preview'] = 'Y';
-                $_GET['width'] = 500;
-                $_GET['height'] = 500;
-                $_GET['signature'] = \Bitrix\Disk\Security\ParameterSigner::getImageSignature($_GET['fileId'], $_GET['width'], $_GET['height']);
                 //класс фильтра для ресайза изображения перед отдачей
                 \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->addFilter(new ImagePreviewSizeFilter);
                 break;
@@ -731,7 +728,6 @@ class Chat extends BitrixLiveChat
             default:
                 $_GET['action'] = 'downloadFile';
         }
-
 
         $controller = new \Bitrix\Disk\DownloadController();
         $controller->setActionName($_GET['action'])->exec();

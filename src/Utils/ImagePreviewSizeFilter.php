@@ -16,9 +16,10 @@ class ImagePreviewSizeFilter implements \Bitrix\Main\Type\IRequestFilter
      */
     public function filter(array $values)
     {
-        if($values['get']['action'] == 'showFile')
+        if($_GET['action'] == 'showFile')
         {
-            if($values['get']['preview'] == 'Y')
+            $values['get']['action'] = 'showFile';
+            if($_GET['preview'] == 'Y')
             {
                 $values['get']['width'] = 500;
                 $values['get']['height'] = 500;

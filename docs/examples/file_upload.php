@@ -23,7 +23,7 @@ CJSCore::Init(['core', 'ajax', 'im', 'jquery']);
 
     function registerFiles() {
         //Хэш результат работы метода open
-        const chatHash = 'd8e24c160110b98b2a6972f301f0b518';
+        const chatHash = '964c2fb51b56d02d84192b713a52f016';
 
         var file_data = $('.bx-messenger-textarea-file-popup-input').prop('files');
 
