@@ -63,7 +63,7 @@ $app->before(function () {
 
 });
 
-$app->mount($app['config.basePath'], new LiveChat());
+$app->mount($app['config.basePath'], new LiveChatController());
 
 $app->error(function(\Exception $e){
     $defCode = $e->getCode() ?: 500;
