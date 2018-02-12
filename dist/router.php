@@ -1,6 +1,6 @@
 <?php
 
-use BxLivechatRestApi\Controllers\LiveChat;
+use BxLivechatRestApi\Controllers\LiveChatController;
 use BxLivechatRestApi\Entities\Chat;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Bitrix\Main\Loader;
