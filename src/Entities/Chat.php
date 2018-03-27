@@ -28,6 +28,7 @@ class Chat extends BitrixLiveChat
 
     const SYSTEM_AVATAR = '/upload/system_avatar.png';
     const SYSTEM_NAME = 'Petstory';
+    const LOCATION_LEAD_USER_FIELD_NAME = 'Город пользователя';
 
     public function __construct($chatAlias, $chatHash = '', $checkIsOpened = true)
     {
@@ -90,6 +91,42 @@ class Chat extends BitrixLiveChat
         return true;
     }
 
+    protected function fillTemporaryParams()
+    {
+        if (isset($_REQUEST['userName'])) {
+            $this->temporary['USER_NAME'] = $_REQUEST['userName'];
+        }
+        if (isset($_REQUEST['userLastName'])) {
+            $this->temporary['USER_LAST_NAME'] = $_REQUEST['userLastName'];
+        }
+        if (isset($_REQUEST['userAvatar'])) {
+            $this->temporary['USER_AVATAR'] = $_REQUEST['userAvatar'];
+        }
+        if (isset($_REQUEST['userEmail'])) {
+            $this->temporary['USER_EMAIL'] = $_REQUEST['userEmail'];
+        }
+        if (isset($_REQUEST['userLocation'])) {
+            $this->temporary['USER_LOCATION'] = htmlspecialcharsEx($_REQUEST['userLocation']);
+        }
+        if (isset($_REQUEST['currentUrl']) && !empty($_REQUEST['currentUrl'])) {
+            $currentUrl = parse_url($_REQUEST['currentUrl']);
+            if ($currentUrl) {
+                $this->temporary['USER_PERSONAL_WWW'] = $_REQUEST['currentUrl'];
+            }
+        }
+
+        $userLocationFirstMessageString = '[b]' . self::LOCATION_LEAD_USER_FIELD_NAME . '[/b]:' .$this->temporary['USER_LOCATION'];
+
+        if (isset($_REQUEST['firstMessage'])) {
+            $this->temporary['FIRST_MESSAGE'] = $_REQUEST['firstMessage'] . $userLocationFirstMessageString;
+        } else if (isset($_REQUEST['currentUrl']) && !empty($_REQUEST['currentUrl'])) {
+            $currentUrl = parse_url($_REQUEST['currentUrl']);
+            if ($currentUrl) {
+                $this->temporary['FIRST_MESSAGE'] = '[b]' . Loc::getMessage('IMOL_LC_GUEST_URL') . '[/b]: [url=' . $_REQUEST['currentUrl'] . ']' . $currentUrl['scheme'] . '://' . $currentUrl['host'] . '/' . $currentUrl['path'] . '[/url]'.$userLocationFirstMessageString;
+            }
+        }
+    }
+    
     /**
      * Открываем сессию открытой линии
      *
@@ -114,6 +151,8 @@ class Chat extends BitrixLiveChat
         }
 
         $_SESSION['LIVECHAT_HASH'] = $this->sessionId;
+
+        $this->fillTemporaryParams();
 
         $this->userId = $this->getGuestUser();
 
@@ -158,6 +197,7 @@ class Chat extends BitrixLiveChat
         $userWebsite = isset($this->temporary['USER_PERSONAL_WWW']) ? $this->temporary['USER_PERSONAL_WWW'] : '';
         $userGender = '';
         $userAvatar = isset($this->temporary['USER_AVATAR']) ? self::uploadAvatar($this->temporary['USER_AVATAR']) : '';
+        $userLocationCity = isset($this->temporary['USER_LOCATION']) ? $this->temporary['USER_LOCATION'] : '';
         $userWorkPosition = '';
 
         if ($userId && \Bitrix\Im\User::getInstance($userId)->isExists()) {
@@ -195,6 +235,9 @@ class Chat extends BitrixLiveChat
             if ($userWebsite && $userWebsite != $userFields['PERSONAL_WWW']) {
                 $updateFields['PERSONAL_WWW'] = $userWebsite;
             }
+            if ($userLocationCity && $userLocationCity != $userFields['PERSONAL_CITY']) {
+                $updateFields['PERSONAL_CITY'] = $userLocationCity;
+            }
 
             if (!empty($updateFields)) {
                 $cUser = new \CUser;
@@ -216,6 +259,7 @@ class Chat extends BitrixLiveChat
             }
             $fields['PERSONAL_GENDER'] = $userGender;
             $fields['WORK_POSITION'] = $userWorkPosition;
+            $fields['PERSONAL_CITY'] = $userLocationCity;
             $fields['PASSWORD'] = md5($fields['LOGIN'] . '|' . mt_rand(1000, 9999) . '|' . time());
             $fields['CONFIRM_PASSWORD'] = $fields['PASSWORD'];
             $fields['EXTERNAL_AUTH_ID'] = self::EXTERNAL_AUTH_ID;
@@ -316,6 +360,63 @@ class Chat extends BitrixLiveChat
 
         return $this->chat;
     }
+
+    /**
+     * Установка строки местоположения
+     * в профиль пользователя Битрикс
+     *
+     * @param Request $request
+     * @throws \Exception
+     */
+    public function setChatUserLocation(Request $request)
+    {
+        $location = $request->get('LOCATION');
+        if(empty($location)){
+            throw new \Exception('Empty Location string');
+        }
+
+        $updateFields = [];
+        $updateFields['PERSONAL_CITY'] = $location;
+
+        $cUser = new \CUser;
+        $cUser->Update($this->userId, $updateFields);
+
+        /*Обновим поле лида*/
+        $arEntityData = explode('|', $this->chat['ENTITY_DATA_1']);
+
+        $linkedLeadId = (int) $arEntityData[2];
+
+        if(!empty($linkedLeadId)){
+            $locationUserFieldId = $this->getLeadUserFieldIdByName(self::LOCATION_LEAD_USER_FIELD_NAME);
+            if(!empty($locationUserFieldId)){
+                $oLead = new \CCrmLead;
+                $arFields[$locationUserFieldId] = trim($location);
+                $oLead->Update($linkedLeadId, $arFields);
+            }
+        }
+
+        return ['STATUS' => 'OK'];
+    }
+
+    /**
+     * @param $name
+     */
+    protected function getLeadUserFieldIdByName($name)
+    {
+        global $USER_FIELD_MANAGER;
+
+        $CCrmFields = new \CCrmFields($USER_FIELD_MANAGER, 'CRM_LEAD');
+
+        $arFields = $CCrmFields->GetFields();
+        foreach($arFields as $id => $arField){
+            if($arField['EDIT_FORM_LABEL'] === self::LOCATION_LEAD_USER_FIELD_NAME){
+                return $id;
+            }
+        }
+        return false;
+
+    }
+
 
     /**
      * @param int $limit

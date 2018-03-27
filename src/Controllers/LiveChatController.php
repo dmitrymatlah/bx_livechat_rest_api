@@ -130,6 +130,18 @@ class LiveChatController implements ControllerProviderInterface
                 return $this->getResponse();
             }
         );
+        /*установим поле LOCATION из массива запроса
+        как местоположение в профиль пользователя*/
+        $method->post(
+            '{alias}/{chatHash}/location/set',
+            function (Request $request, $alias, $chatHash) use ($app) {
+                $liveChat = self::getChatEntity($app, $alias, $chatHash);
+                $this->response = $liveChat->setChatUserLocation($request);
+                $this->response['LIVECHAT_HASH'] = $liveChat->getChatHash();
+
+                return $this->getResponse();
+            }
+        );
 
         /*PUT*/
         /*Редактируем сообщение*/
