@@ -115,7 +115,7 @@ class Chat extends BitrixLiveChat
             }
         }
 
-        $userLocationFirstMessageString = '[b]' . self::LOCATION_LEAD_USER_FIELD_NAME . '[/b]:' .$this->temporary['USER_LOCATION'];
+        $userLocationFirstMessageString = '[b]' . self::LOCATION_LEAD_USER_FIELD_NAME . '[/b]: ' .$this->temporary['USER_LOCATION'];
 
         if (isset($_REQUEST['firstMessage'])) {
             $this->temporary['FIRST_MESSAGE'] = $_REQUEST['firstMessage'] . $userLocationFirstMessageString;
