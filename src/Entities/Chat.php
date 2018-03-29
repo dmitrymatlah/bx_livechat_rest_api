@@ -128,7 +128,7 @@ class Chat extends BitrixLiveChat
             $this->temporary['FIRST_MESSAGE'] = $userLocationFirstMessageString;
         }
     }
-    
+
     /**
      * Открываем сессию открытой линии
      *
@@ -383,19 +383,33 @@ class Chat extends BitrixLiveChat
         $cUser = new \CUser;
         $cUser->Update($this->userId, $updateFields);
 
-        /*Обновим поле лида*/
-        $arEntityData = explode('|', $this->chat['ENTITY_DATA_1']);
 
-        $linkedLeadId = (int) $arEntityData[2];
+        $orm = \Bitrix\Im\Model\ChatTable::getList(
+            [
+                'filter' => [
+                    '=ENTITY_TYPE' => 'LINES',
+                    '=ENTITY_ID' => 'livechat'. '|' .$this->config['ID'] . '|' .$this->chat['ID'] . '|' . $this->userId,
+                ],
+                'limit' => 1,
+            ]
+        );
+        if($linesChatData = $orm->fetch())
+        {
+            /*Обновим поле лида*/
+            $arEntityData = explode('|', $linesChatData['ENTITY_DATA_1']);
 
-        if(!empty($linkedLeadId)){
-            $locationUserFieldId = $this->getLeadUserFieldIdByName(self::LOCATION_LEAD_USER_FIELD_NAME);
-            if(!empty($locationUserFieldId)){
-                $oLead = new \CCrmLead;
-                $arFields[$locationUserFieldId] = trim($location);
-                $oLead->Update($linkedLeadId, $arFields);
+            $linkedLeadId = (int) $arEntityData[2];
+
+            if(!empty($linkedLeadId)){
+                $locationUserFieldId = $this->getLeadUserFieldIdByName(self::LOCATION_LEAD_USER_FIELD_NAME);
+                if(!empty($locationUserFieldId)){
+                    $oLead = new \CCrmLead(false);
+                    $arFields[$locationUserFieldId] = trim($location);
+                    $oLead->Update($linkedLeadId, $arFields);
+                }
             }
         }
+
 
         return ['STATUS' => 'OK'];
     }
