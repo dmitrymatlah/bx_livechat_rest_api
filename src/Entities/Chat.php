@@ -372,7 +372,7 @@ class Chat extends BitrixLiveChat
      */
     public function setChatUserLocation(Request $request)
     {
-        $location = $request->get('LOCATION');
+        $location = $request->get('userLocation');
         if(empty($location)){
             throw new \Exception('Empty Location string');
         }
