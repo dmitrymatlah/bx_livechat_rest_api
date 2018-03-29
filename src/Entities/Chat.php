@@ -122,8 +122,10 @@ class Chat extends BitrixLiveChat
         } else if (isset($_REQUEST['currentUrl']) && !empty($_REQUEST['currentUrl'])) {
             $currentUrl = parse_url($_REQUEST['currentUrl']);
             if ($currentUrl) {
-                $this->temporary['FIRST_MESSAGE'] = '[b]' . Loc::getMessage('IMOL_LC_GUEST_URL') . '[/b]: [url=' . $_REQUEST['currentUrl'] . ']' . $currentUrl['scheme'] . '://' . $currentUrl['host'] . '/' . $currentUrl['path'] . '[/url]'.$userLocationFirstMessageString;
+                $this->temporary['FIRST_MESSAGE'] = '[b]' . Loc::getMessage('IMOL_LC_GUEST_URL') . '[/b]: [url=' . $_REQUEST['currentUrl'] . ']' . $currentUrl['scheme'] . '://' . $currentUrl['host'] . '/' . $currentUrl['path'] . '[/url]' . $userLocationFirstMessageString;
             }
+        } else if (!empty($_REQUEST['userLocation'])) {
+            $this->temporary['FIRST_MESSAGE'] = $userLocationFirstMessageString;
         }
     }
     
